@@ -107,15 +107,6 @@ st.caption(f"RMSE **{RMSE:,.0f}**   |   MAE **{MAE:,.0f}**")
 
 
 
-# ───────────────────── Gain‑важность ─────────────────────────
-feat_names = pipe.named_steps["prep"].get_feature_names_out()
-gain = pipe.named_steps["xgb"].get_booster().get_score(importance_type="gain")
-gain_s = pd.Series(gain).reindex(feat_names, fill_value=0).sort_values(ascending=False)
-
-fig, ax = plt.subplots(figsize=(6,8))
-sns.barplot(y=gain_s.head(20).index, x=gain_s.head(20).values, palette="viridis", ax=ax)
-ax.set_title("XGB gain importance"); ax.set_xlabel("gain"); ax.set_ylabel("")
-st.pyplot(fig)
 
 # ───────────────────── SHAP ──────────────────────────────────
 with st.spinner("SHAP (подвыборка 400 строк)…"):
