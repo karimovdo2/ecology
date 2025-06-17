@@ -30,6 +30,7 @@ region_col = st.selectbox("Колонка района", sorted(df.select_dtypes
 target_col = st.selectbox("Целевая переменная", sorted([c for c in df.columns if c not in [year_col, region_col]]))
 
 min_nonmiss = st.slider("Мин. заполненность признака", 0.1, 0.9, 0.3, 0.05)
+min_row_fill = st.slider("Мин. заполненность строки (для каждого района)", 0.1, 0.9, 0.3, 0.05)
 test_years  = st.slider("Лет в тесте", 1, 3, 1)
 max_depth   = st.slider("max_depth", 2, 10, 6)
 n_estim     = st.slider("n_estimators", 100, 2000, 1000, 100)
@@ -40,7 +41,10 @@ if not st.button("🚀 Запустить анализ"):
 # ───────────────────── Подготовка и кэш ──────────────────────
 @st.cache_resource(show_spinner=False)
 def train_cache(df, year_col, region_col, target_col,
-                min_nonmiss, test_years, max_depth, n_estim):
+                min_nonmiss, min_row_fill, test_years, max_depth, n_estim):
+    # фильтрация по заполненности строк (минимум 30%)
+    df = df[df.notna().mean(axis=1) >= min_row_fill]
+    
     eco_cols = [c for c in df.columns if c.startswith(("Air_", "Water_", "Soil_"))]
     for c in eco_cols:
         lag = f"{c}_lag1"
@@ -50,13 +54,17 @@ def train_cache(df, year_col, region_col, target_col,
     num_cols  = eco_cols + [f"{c}_lag1" for c in eco_cols]
     good_cols = [c for c in num_cols if df[c].notna().mean() >= min_nonmiss]
 
+    # вывод статистики по районам
+    num_districts = len(df[region_col].unique())
+    st.write(f"Выбрано {len(good_cols)} признаков и {num_districts} районов.")
+
     train_mask = df[year_col] < df[year_col].max() - test_years
     X_train = df.loc[train_mask, good_cols + [region_col]]
     y_train = df.loc[train_mask, target_col]
     X_test  = df.loc[~train_mask, good_cols + [region_col]]
     y_test  = df.loc[~train_mask, target_col]
 
-    pipe = Pipeline([
+    pipe = Pipeline([  # создаём пайплайн с XGBoost
         ("prep", ColumnTransformer(
             [("cat", OneHotEncoder(handle_unknown="ignore"),
               [X_train.columns.get_loc(region_col)])],
@@ -66,11 +74,6 @@ def train_cache(df, year_col, region_col, target_col,
             learning_rate=0.045, subsample=0.8,
             colsample_bytree=0.8, reg_lambda=1.0,
             random_state=42, n_jobs=-1, missing=np.nan))
-
-
-
-
-
     ]).fit(X_train, y_train)
 
     return df, good_cols, pipe, X_train, y_train, X_test, y_test
@@ -78,7 +81,7 @@ def train_cache(df, year_col, region_col, target_col,
 with st.spinner("⏳ Обучаем XGBoost…"):
     df, good_cols, pipe, X_tr, y_tr, X_te, y_te = train_cache(
         df.copy(), year_col, region_col, target_col,
-        min_nonmiss, test_years, max_depth, n_estim)
+        min_nonmiss, min_row_fill, test_years, max_depth, n_estim)
 st.success("✅ Модель обучена")
 
 # ───────────────────── Метрики ───────────────────────────────
@@ -104,34 +107,49 @@ st.pyplot(fig)
 
 # ───────────────────── SHAP ──────────────────────────────────
 with st.spinner("SHAP (подвыборка 400 строк)…"):
+    # Трансформируем данные с помощью pipeline
     X_tr_enc = pipe.named_steps["prep"].transform(X_tr)
+
+    # Выбираем случайное подмножество для анализа (максимум 400 строк)
     sub = np.random.choice(X_tr_enc.shape[0], size=min(400, X_tr_enc.shape[0]), replace=False)
-    explainer   = shap.TreeExplainer(pipe.named_steps["xgb"])
+
+    # Проверяем размерность данных
+    assert X_tr_enc[sub].shape[0] == len(feat_names), f"Размеры данных не совпадают: {X_tr_enc[sub].shape[0]} != {len(feat_names)}"
+    
+    # Инициализируем SHAP Explainer
+    explainer = shap.TreeExplainer(pipe.named_steps["xgb"])
+    
+    # Вычисляем SHAP значения
     shap_values = explainer.shap_values(X_tr_enc[sub])
 
+# Получаем абсолютные значения SHAP для оценки важности признаков
 shap_abs = np.abs(shap_values).mean(axis=0)
-shap_df  = pd.DataFrame({"feature": feat_names, "shap": shap_abs}).sort_values("shap", ascending=False)
+shap_df = pd.DataFrame({"feature": feat_names, "shap": shap_abs}).sort_values("shap", ascending=False)
 
-# bar
-fig, ax = plt.subplots(figsize=(6,8))
+# Bar plot для SHAP важности
+fig, ax = plt.subplots(figsize=(6, 8))
 sns.barplot(y=shap_df.head(20)["feature"], x=shap_df.head(20)["shap"], palette="magma", ax=ax)
-ax.set_title("Global SHAP importance"); ax.set_xlabel("|SHAP|"); ax.set_ylabel("")
+ax.set_title("Global SHAP importance")
+ax.set_xlabel("|SHAP|")
+ax.set_ylabel("")
 st.pyplot(fig)
 
-# beeswarm
+# SHAP beeswarm plot
 st.subheader("SHAP beeswarm")
 shap.summary_plot(shap_values, pd.DataFrame(X_tr_enc[sub], columns=feat_names),
-                  show=False, max_display=25, plot_size=(8,6))
-st.pyplot(plt.gcf())   # вывод текущего фиг.
+                  show=False, max_display=25, plot_size=(8, 6))
+st.pyplot(plt.gcf())  # вывод текущего рисунка
 plt.clf()
 
-# dependence
+# SHAP dependence plots для топ-3 признаков
 st.subheader("SHAP dependence (топ‑3)")
+
 for feat in shap_df.head(3)["feature"]:
     shap.dependence_plot(feat, shap_values,
                          pd.DataFrame(X_tr_enc[sub], columns=feat_names),
                          show=False, interaction_index=None, alpha=0.4)
-    st.pyplot(plt.gcf()); plt.clf()
+    st.pyplot(plt.gcf())
+    plt.clf()
 
 # ───────────────────── Partial dependence ────────────────────
 num_feats = [f for f in shap_df["feature"] if f.startswith("remainder__")]
