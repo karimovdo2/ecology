@@ -33,7 +33,7 @@ min_nonmiss = st.slider("Мин. заполненность признака", 0
 min_row_fill = st.slider("Мин. заполненность строки (для каждого района)", 0.0, 1.0, 0.3, 0.01)
 test_years = st.slider("Лет в тесте", 1, 3, 1)
 max_depth = st.slider("max_depth", 2, 10, 3)
-n_estim = st.slider("n_estimators", 100, 1000, 100, 50)
+n_estim = st.slider("n_estimators", 100, 300, 100, 50)
 
 if not st.button("🚀 Запустить анализ"):
     st.stop()
@@ -56,7 +56,13 @@ def train_cache(df, year_col, region_col, target_col,
 
     # вывод статистики по районам
     num_districts = len(df[region_col].unique())
-    st.write(f"Выбрано {len(good_cols)} признаков и {num_districts} районов.")
+    # Показать количество строк данных
+    num_rows = len(df)
+    st.write(f"Количество строк данных: {num_rows}")
+
+    # Показать количество выбранных признаков и районов
+    st.write(f"Выбрано {len(good_cols)} признаков и {len(df[region_col].unique())} районов.")
+
 
     train_mask = df[year_col] < df[year_col].max() - test_years
     X_train = df.loc[train_mask, good_cols + [region_col]]
