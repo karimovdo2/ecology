@@ -32,8 +32,8 @@ target_col = st.selectbox("Целевая переменная", sorted([c for c
 min_nonmiss = st.slider("Мин. заполненность признака", 0.1, 0.9, 0.3, 0.05)
 min_row_fill = st.slider("Мин. заполненность строки (для каждого района)", 0.1, 0.9, 0.3, 0.05)
 test_years  = st.slider("Лет в тесте", 1, 3, 1)
-max_depth   = st.slider("max_depth", 2, 10, 6)
-n_estim     = st.slider("n_estimators", 100, 1000, 1000, 50)
+max_depth   = st.slider("max_depth", 2, 10, 3)
+n_estim     = st.slider("n_estimators", 100, 1000, 100, 50)
 
 if not st.button("🚀 Запустить анализ"):
     st.stop()
