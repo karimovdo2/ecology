@@ -1,0 +1,20 @@
+{
+  "scores": {
+    "LightGBM+OHE": -0.2296906470943969,
+    "CatBoostOrdered": 0.3755275469053365,
+    "XGBoost+OHE": 0.5025901228834793,
+    "MissForest+RF": -0.28165516352458764,
+    "TabNet": -10.197778346205736,
+    "MERF": "TypeError: clusters must be a pandas Series.",
+    "FLAML": "ModuleNotFoundError: No module named 'flaml'"
+  },
+  "times_sec": {
+    "LightGBM+OHE": 0.33116729999892414,
+    "CatBoostOrdered": 57.74129420000827,
+    "XGBoost+OHE": 1.6203934999648482,
+    "MissForest+RF": 24.732914599997457,
+    "TabNet": 1.727180199988652,
+    "MERF": null,
+    "FLAML": null
+  }
+}
