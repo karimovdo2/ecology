@@ -63,10 +63,20 @@ def train_cache(df, year_col, region_col, target_col,
             remainder="passthrough", sparse_threshold=0.3)),
         ("xgb", XGBRegressor(
             n_estimators=n_estim, max_depth=max_depth,
-            learning_rate=0.045, subsample=0.8,
-            colsample_bytree=0.8, reg_lambda=1.0,
-            random_state=42, n_jobs=-1, missing=np.nan))
-    ]).fit(X_train, y_train)
+             learning_rate=0.045,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    reg_lambda=1.0,
+    random_state=42,
+    missing=np.nan,
+    n_jobs=-1))
+
+
+            
+
+)
+
+
 
     return df, good_cols, pipe, X_train, y_train, X_test, y_test
 
