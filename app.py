@@ -119,8 +119,10 @@ with st.spinner("SHAP (подвыборка 400 строк)…"):
     # Выбираем случайное подмножество для анализа (максимум 400 строк)
     sub = np.random.choice(X_tr_enc.shape[0], size=min(400, X_tr_enc.shape[0]), replace=False)
 
-    # Проверяем размерность данных
-    assert X_tr_enc[sub].shape[0] == len(feat_names), f"Размеры данных не совпадают: {X_tr_enc[sub].shape[0]} != {len(feat_names)}"
+    # Проверяем, что подмножество данных и количество признаков совпадают
+    if X_tr_enc[sub].shape[0] != len(feat_names):
+        st.error(f"Размеры данных не совпадают: {X_tr_enc[sub].shape[0]} != {len(feat_names)}")
+        st.stop()  # Останавливаем выполнение, если данные не совпадают
     
     # Инициализируем SHAP Explainer
     explainer = shap.TreeExplainer(pipe.named_steps["xgb"])
@@ -149,13 +151,13 @@ plt.clf()
 
 # SHAP dependence plots для топ-3 признаков
 st.subheader("SHAP dependence (топ‑3)")
-
 for feat in shap_df.head(3)["feature"]:
     shap.dependence_plot(feat, shap_values,
                          pd.DataFrame(X_tr_enc[sub], columns=feat_names),
                          show=False, interaction_index=None, alpha=0.4)
     st.pyplot(plt.gcf())
     plt.clf()
+
 
 # ───────────────────── Partial dependence ────────────────────
 num_feats = [f for f in shap_df["feature"] if f.startswith("remainder__")]
