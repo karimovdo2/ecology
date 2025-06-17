@@ -24,16 +24,16 @@ if not upl:
     st.stop()
 
 df = pd.read_csv(upl) if upl.name.lower().endswith(".csv") else pd.read_excel(upl, engine="openpyxl")
-
-year_col   = st.selectbox("Колонка года", sorted([c for c in df.columns if df[c].dtype != "object"]))
+year_col = st.selectbox("Колонка года", sorted([c for c in df.columns if df[c].dtype != "object"]))
 region_col = st.selectbox("Колонка района", sorted(df.select_dtypes("object").columns))
 target_col = st.selectbox("Целевая переменная", sorted([c for c in df.columns if c not in [year_col, region_col]]))
 
-min_nonmiss = st.slider("Мин. заполненность признака", 0, 0.9, 0.3, 0.05)
-min_row_fill = st.slider("Мин. заполненность строки (для каждого района)", 0, 0.3, 0.3, 0.01)
-test_years  = st.slider("Лет в тесте", 1, 3, 1)
-max_depth   = st.slider("max_depth", 2, 10, 3)
-n_estim     = st.slider("n_estimators", 100, 1000, 100, 50)
+# Параметры для фильтрации
+min_nonmiss = st.slider("Мин. заполненность признака", 0.0, 1.0, 0.3, 0.05)
+min_row_fill = st.slider("Мин. заполненность строки (для каждого района)", 0.0, 1.0, 0.3, 0.01)
+test_years = st.slider("Лет в тесте", 1, 3, 1)
+max_depth = st.slider("max_depth", 2, 10, 3)
+n_estim = st.slider("n_estimators", 100, 1000, 100, 50)
 
 if not st.button("🚀 Запустить анализ"):
     st.stop()
