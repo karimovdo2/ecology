@@ -116,8 +116,8 @@ with st.spinner("SHAP (подвыборка 400 строк)…"):
     # Трансформируем данные с помощью pipeline
     X_tr_enc = pipe.named_steps["prep"].transform(X_tr)
 
-    # Выбираем случайное подмножество для анализа (максимум 400 строк)
-    sub = np.random.choice(X_tr_enc.shape[0], size=min(400, X_tr_enc.shape[0]), replace=False)
+    # Выбираем первые 400 строк, чтобы избежать проблем с несоответствием данных
+    sub = np.arange(min(400, X_tr_enc.shape[0]))
 
     # Проверяем, что подмножество данных и количество признаков совпадают
     if X_tr_enc[sub].shape[0] != len(feat_names):
@@ -157,6 +157,7 @@ for feat in shap_df.head(3)["feature"]:
                          show=False, interaction_index=None, alpha=0.4)
     st.pyplot(plt.gcf())
     plt.clf()
+
 
 
 # ───────────────────── Partial dependence ────────────────────
