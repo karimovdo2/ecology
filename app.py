@@ -5,8 +5,6 @@
 import streamlit as st
 from pathlib import Path
 import io, json, warnings
-
-import io, os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -33,14 +31,17 @@ st.title("Анализ влияния экологических факторо�
 
 uploaded = st.file_uploader("Загрузите объединённую таблицу (.xlsx или .csv)", type=["xlsx", "csv"])
 
-fname = uploaded.name.lower()
-if fname.endswith(".csv"):
-    df = pd.read_csv(uploaded)
-elif fname.endswith((".xls", ".xlsx")):
-    df = pd.read_excel(uploaded, engine="openpyxl")
-else:
-    st.error("Поддерживаются только CSV, XLS, XLSX")
-    st.stop()
+if uploaded:
+    if uploaded.name.endswith(".csv"):
+        df = pd.read_csv(uploaded)
+    else:
+        df = pd.read_excel(uploaded)
+
+
+# было:
+# df = pd.read_excel(uploaded)
+
+
 
 
 
