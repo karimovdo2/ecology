@@ -84,7 +84,7 @@ st.success("✅ Модель обучена")
 # ───────────────────── Метрики ───────────────────────────────
 y_pred = pipe.predict(X_te)
 R2  = r2_score(y_te, y_pred)
-RMSE = mean_squared_error(y_te, y_pred, squared=False)
+RMSE = np.sqrt(mean_squared_error(y_te, y_pred))
 MAE  = mean_absolute_error(y_te, y_pred)
 cv_r2 = cross_val_score(pipe, X_tr, y_tr,
                         cv=TimeSeriesSplit(n_splits=5), scoring="r2")
