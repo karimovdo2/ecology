@@ -31,8 +31,8 @@ target_col = st.selectbox("Целевая переменная", sorted([c for c
 
 min_nonmiss = st.slider("Мин. заполненность признака", 0.1, 0.9, 0.3, 0.05)
 test_years  = st.slider("Лет в тесте", 1, 3, 1)
-max_depth   = st.slider("max_depth", 3, 10, 6)
-n_estim     = st.slider("n_estimators", 300, 2000, 1000, 100)
+max_depth   = st.slider("max_depth", 2, 10, 6)
+n_estim     = st.slider("n_estimators", 100, 2000, 1000, 100)
 
 if not st.button("🚀 Запустить анализ"):
     st.stop()
@@ -63,20 +63,15 @@ def train_cache(df, year_col, region_col, target_col,
             remainder="passthrough", sparse_threshold=0.3)),
         ("xgb", XGBRegressor(
             n_estimators=n_estim, max_depth=max_depth,
-             learning_rate=0.045,
-    subsample=0.8,
-    colsample_bytree=0.8,
-    reg_lambda=1.0,
-    random_state=42,
-    missing=np.nan,
-    n_jobs=-1))
+            learning_rate=0.045, subsample=0.8,
+            colsample_bytree=0.8, reg_lambda=1.0,
+            random_state=42, n_jobs=-1, missing=np.nan))
 
 
-            
-
-)
 
 
+
+    ]).fit(X_train, y_train)
 
     return df, good_cols, pipe, X_train, y_train, X_test, y_test
 
