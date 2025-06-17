@@ -161,14 +161,24 @@ for feat in shap_df.head(3)["feature"]:
 
 
 # ───────────────────── Partial dependence ────────────────────
+st.subheader("Partial dependence (топ‑числовых)")
 num_feats = [f for f in shap_df["feature"] if f.startswith("remainder__")]
-top_raw   = [f.replace("remainder__", "") for f in num_feats[:3]]
+top_raw   = [f.replace("remainder__", "") for f in num_feats[:3]]  # выберите топ 3 числовых признаков
+
 if top_raw:
-    st.subheader("Partial dependence (топ‑числовых)")
     for raw in top_raw:
-        fig, ax = plt.subplots(figsize=(5,3))
-        PartialDependenceDisplay.from_estimator(pipe, X_tr, [raw], ax=ax, grid_resolution=50)
+        fig, ax = plt.subplots(figsize=(5, 3))
+        # Убедимся, что мы передаем правильную модель и данные
+        PartialDependenceDisplay.from_estimator(
+            pipe,                          # наш обученный пайплайн
+            X_train,                        # «сырые» данные до трансформаций
+            [raw],                          # передаем правильное название признака
+            ax=ax, 
+            grid_resolution=50
+        )
+        ax.set_title(f"Partial dependence: {raw}")
         st.pyplot(fig)
+
 
 # ───────────────────── Scatter & residuals ───────────────────
 c1, c2 = st.columns(2)
