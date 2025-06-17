@@ -85,15 +85,25 @@ with st.spinner("⏳ Обучаем XGBoost…"):
 st.success("✅ Модель обучена")
 
 # ───────────────────── Метрики ───────────────────────────────
+st.markdown(f"Начало предсказания")
 y_pred = pipe.predict(X_te)
-R2  = r2_score(y_te, y_pred)
+st.markdown(f"Начало расчета метрик")
+# Вычисление R², RMSE и MAE
+R2 = r2_score(y_te, y_pred)
+st.markdown(f"### 🎯 Hold‑out R² **{R2:.3f}**")
 RMSE = np.sqrt(mean_squared_error(y_te, y_pred))
-MAE  = mean_absolute_error(y_te, y_pred)
-cv_r2 = cross_val_score(pipe, X_tr, y_tr,
-                        cv=TimeSeriesSplit(n_splits=5), scoring="r2")
+MAE = mean_absolute_error(y_te, y_pred)
 
-st.markdown(f"### 🎯 Hold‑out R² **{R2:.3f}**   |   CV R² **{cv_r2.mean():.3f} ± {cv_r2.std():.3f}**")
-st.caption(f"RMSE {RMSE:,.0f}   |   MAE {MAE:,.0f}")
+# Вывод метрик сразу после их расчета
+
+st.caption(f"RMSE **{RMSE:,.0f}**   |   MAE **{MAE:,.0f}**")
+
+# Cross-validation R²
+cv_r2 = cross_val_score(pipe, X_tr, y_tr, cv=TimeSeriesSplit(n_splits=5), scoring="r2")
+
+# Вывод Cross-validation R²
+st.markdown(f"### 🎯 CV R² **{cv_r2.mean():.3f} ± {cv_r2.std():.3f}**")
+
 
 # ───────────────────── Gain‑важность ─────────────────────────
 feat_names = pipe.named_steps["prep"].get_feature_names_out()
